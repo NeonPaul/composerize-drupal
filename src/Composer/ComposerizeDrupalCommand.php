@@ -147,7 +147,7 @@ class ComposerizeDrupalCommand extends BaseCommand
             }
         }
         if (!isset($this->drupalCoreVersion)) {
-            throw new \Exception("Unable to determine Drupal core version.");
+            //throw new \Exception("Unable to determine Drupal core version.");
         }
     }
 
@@ -156,9 +156,9 @@ class ComposerizeDrupalCommand extends BaseCommand
      */
     protected function requireContribProjects($root_composer_json)
     {
-        $modules = DrupalInspector::findContribProjects($this->drupalRoot, "modules/contrib");
-        $themes = DrupalInspector::findContribProjects($this->drupalRoot, "themes/contrib");
-        $profiles = DrupalInspector::findContribProjects($this->drupalRoot, "profiles/contrib");
+        $modules = DrupalInspector::findContribProjects($this->drupalRoot, "sites/all/modules/contrib");
+        $themes = DrupalInspector::findContribProjects($this->drupalRoot, "sites/all/themes/contrib");
+        $profiles = DrupalInspector::findContribProjects($this->drupalRoot, "sites/all/profiles/contrib");
 
         $projects = array_merge($modules, $themes, $profiles);
         foreach ($projects as $project => $version) {
@@ -238,6 +238,9 @@ class ComposerizeDrupalCommand extends BaseCommand
      */
     protected function requireDrupalCore($root_composer_json)
     {
+        if (!isset($this->drupalCoreVersion)) {
+            return;
+        }
         $version_constraint = $this->getVersionConstraint($this->drupalCoreVersion);
         $root_composer_json->require->{'drupal/core'} = $version_constraint;
         $this->getIO()
@@ -325,7 +328,7 @@ class ComposerizeDrupalCommand extends BaseCommand
      */
     protected function getVersionConstraint($version)
     {
-        if ($this->input->getOption('exact-versions')) {
+        if ($version === '*' || $this->input->getOption('exact-versions')) {
             return $version;
         }
 

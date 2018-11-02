@@ -16,18 +16,26 @@ class DrupalInspector
 
         $finder = new Finder();
         $finder->in([$drupal_root . "/" . $subdir])
-        ->name('*.info.yml')
+        ->name('*.info')
         ->depth('== 1')
         ->files();
 
         $projects = [];
         foreach ($finder as $fileInfo) {
+            echo $fileInfo;
             $path = $fileInfo->getPathname();
             $filename_parts = explode('.', $fileInfo->getFilename());
             $machine_name = $filename_parts[0];
-            $module_info = Yaml::parseFile($path);
-            $semantic_verision = self::getSemanticVersion($module_info['version']);
-            $projects[$machine_name] = $semantic_verision;
+            //$module_info = Yaml::parseFile($path);
+            //$semantic_verision = self::getSemanticVersion($module_info['version']);
+            preg_match('|(version = ")(.+)"|', file_get_contents($path), $matches);
+            print_r($matches);
+            if(isset($matches[2])) {
+                $semantic_verision = self::getSemanticVersion($matches[2]);
+                $projects[$machine_name] = $semantic_verision;
+            } else {
+                $projects[$machine_name] = '*';
+            }
         }
 
         return $projects;
@@ -52,7 +60,7 @@ class DrupalInspector
     public static function getSemanticVersion($drupal_version)
     {
       // Strip the 8.x prefix from the version.
-        $version = preg_replace('/^8\.x-/', null, $drupal_version);
+        $version = preg_replace('/^[78]\.x-/', null, $drupal_version);
 
         if (preg_match('/-dev$/', $version)) {
             return preg_replace('/^(\d).+-dev$/', '$1.x-dev', $version);
